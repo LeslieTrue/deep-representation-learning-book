@@ -215,6 +215,9 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 \@ifclassloaded{EngC}{
   \newcommand{\AJW@tocleaders}{\leaders\hbox{$\m@th
     \mkern \@dotsep mu\hbox{.}\mkern \@dotsep mu$}\hfill}
+  \newcommand{\tocleadersoff}{\let\AJW@tocleaders\hfill}
+  \newcommand{\tocleaderson}{\let\AJW@tocleaders\AJW@tocleaders@saved}
+  \let\AJW@tocleaders@saved\AJW@tocleaders
   \def\@dottedtocline#1#2#3#4#5{%
    \ifnum #1>\c@tocdepth
    \else
@@ -277,6 +280,14 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
    \gdef\@title{}
    \let\maketitle\relax
   }
+}{}
+\makeatother
+
+% Override \paragraph for Chinese: bold instead of italic, run-in (no newline after title)
+\makeatletter
+\@ifclassloaded{EngC}{
+  \renewcommand\paragraph{\@startsection{paragraph}{4}{\z@}%
+    {-13\p@ \@plus-7\p@ \@minus-3.5\p@}{-1em}{\Bheadsize\bfseries\AJW@raggedright}}
 }{}
 \makeatother
 
@@ -353,6 +364,8 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 \makeatother
 \maketitle
 
+\addtocontents{toc}{\protect\tocleadersoff}
+
 \phantomsection\addcontentsline{toc}{chapter}{前言}
 \subfile{chapters/preface/preface_zh.tex}
 
@@ -367,6 +380,8 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 
 \phantomsection\addcontentsline{toc}{chapter}{\numberline{}符号说明}
 \subfile{chapters/notation_zh.tex}
+
+\addtocontents{toc}{\protect\tocleaderson}
 
 \tableofcontents
 
@@ -396,6 +411,7 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 \makeatletter
 \@ifclassloaded{EngC}{\backmatter}{\newpage}
 \makeatother\appendix
+\addtocontents{toc}{\protect\setcounter{tocdepth}{2}}
 \makeatletter
 \@ifclassloaded{EngC}{}{
     \part*{附录}
