@@ -1,5 +1,5 @@
-% \documentclass{book}
-\documentclass{EngC}
+\documentclass{book}
+% \documentclass{EngC}
 
 \makeatletter
 \@ifclassloaded{EngC}{
@@ -22,25 +22,9 @@
 \usepackage[UTF8]{ctex}
 
 % Font packages
+\usepackage[utf8]{inputenc}
 \usepackage{bbold}
 \usepackage{pifont}
-
-% Fix bbold missing size ranges under XeLaTeX
-\DeclareFontFamily{U}{bbold}{}
-\DeclareFontShape{U}{bbold}{m}{n}{
-  <-5.5>   bbold5
-  <5.5-6.5> bbold6
-  <6.5-7.5> bbold7
-  <7.5-8.5> bbold8
-  <8.5-9.5> bbold9
-  <9.5-11.5> bbold10
-  <11.5-14.5> bbold12
-  <14.5->   bbold17
-}{}
-
-% Fix missing font shapes for Latin Modern under TU encoding
-\DeclareFontShape{TU}{lmr}{bx}{sc}{<->ssub*lmr/bx/n}{}
-\DeclareFontShape{TU}{lmss}{m}{sc}{<->ssub*lmss/m/n}{}
 
 % Math packages
 \usepackage{amsmath}
@@ -138,16 +122,8 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 \usepackage[shortlabels]{enumitem}
 \setlist[enumerate]{label=\arabic*., leftmargin=*}
 \usepackage{fancyvrb}
-\usepackage{soul}
 \VerbatimFootnotes
 \allowdisplaybreaks
-
-% Override EngC's \spacedheader to avoid soul errors with CJK characters
-\makeatletter
-\@ifclassloaded{EngC}{
-    \AtBeginDocument{\renewcommand{\spacedheader}[1]{#1}}
-}{}
-\makeatother
 
 % Custom packages for the book
 \usepackage{math-macros}  % Custom package
@@ -197,78 +173,8 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 
     % Add footnote content below date
     \renewcommand{\maketitlehookd}{%
-        \vspace{6em}\footnotesize $^*$\, 这些作者对本书贡献相等。% These authors contributed equally.
+        \vspace{6em}\footnotesize $^*$\,These authors contributed equally.
     }
-}
-\makeatother
-
-% Add dot leaders to TOC (EngC omits them by default)
-\makeatletter
-\newcommand{\AJW@tocleaders}{\leaders\hbox{$\m@th
-  \mkern \@dotsep mu\hbox{.}\mkern \@dotsep mu$}\hfill}
-\def\@dottedtocline#1#2#3#4#5{%
- \ifnum #1>\c@tocdepth
- \else
-  \vskip \z@ \@plus .2\p@
-  {\leftskip #2\relax
-   \rightskip \@tocrmarg \@plus2em
-   \parfillskip -\rightskip
-   \parindent #2\relax
-   \@afterindenttrue
-   \interlinepenalty\@M
-   \leavevmode
-   \@tempdima #3\relax \advance\leftskip \@tempdima \hbox{}\hskip -\leftskip
-   #4\nobreak
-   \AJW@tocleaders \nobreak
-   \hbox to\@pnumwidth{\hfil\rm #5}\par}%
- \fi}
-\renewcommand*\l@chapter[2]{\pagebreak[3]
- \vspace{\baselineskip}%
- \@tempdima \AJW@toclmarg
- \begingroup
-  \parindent -4pc
-    \rightskip \@pnumwidth  \parfillskip -\@pnumwidth
-  \leavevmode
-  \advance \leftskip \@tempdima  \hskip -\leftskip
-  {\normalfont\boldseriffont #1}\nobreak
-  \AJW@tocleaders \nobreak
-  \hbox to\@pnumwidth{\hss #2}\par
- \endgroup}
-
-% Storage for title-page footer (disclaimer, copyright, equal-contribution note)
-\gdef\@authorfooter{}
-\newcommand{\authorfooter}[1]{\gdef\@authorfooter{#1}}
-
-% Centered title page with rule
-\def\maketitle{\openin1 \jobname.ttl
- \ifeof1
-  \typeout{No file \jobname.ttl.}
-  \begin{titlepage}
-   \centering
-   \vspace*{2\p@}
-   {\parttitlesize\boldseriffont \@title \par}
-   \if\@subtitle\empty\else \vskip 14\p@ {\subtitlesize\@subtitle \par} \fi
-   \vskip 10\p@
-   \rule{\textwidth}{0.5pt}\par
-   \vspace{24\p@}
-   {\authorsize\seriffont
-     \ifAJW@multisty {\itshape Edited by} \\ \fi
-     \@author
-     \par}
-   \vfill
-   {\footnotesize \@authorfooter \par}
-  \end{titlepage}
-  \cleardoublepage
- \else
-  \closein1 \relax\@@input \jobname.ttl
- \fi
- \setcounter{footnote}{0}
- \let\thanks\relax
- \gdef\@thanks{}
- \gdef\@author{}
- \gdef\@shortauthor{}
- \gdef\@title{}
- \let\maketitle\relax
 }
 \makeatother
 
@@ -345,10 +251,10 @@ cambridgemods baseline-skip author authors cambridgestyle en-vir-on-ment polar}
 \makeatother
 \maketitle
 
-\phantomsection\addcontentsline{toc}{chapter}{\numberline{}前言}
+\phantomsection\addcontentsline{toc}{chapter}{\numberline{}序言}
 \subfile{chapters/preface/preface_zh.tex}
 
-\phantomsection\addcontentsline{toc}{chapter}{\numberline{}第二版前言}
+\phantomsection\addcontentsline{toc}{chapter}{\numberline{}第二版序言}
 \subfile{chapters/preface/preface-v2_zh.tex}
 
 \phantomsection\addcontentsline{toc}{chapter}{\numberline{}开源声明}
