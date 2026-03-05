@@ -17,6 +17,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -411,6 +412,9 @@ def build_mini_toc(soup: BeautifulSoup, filename: str):
 # ---------------------------------------------------------------------------
 
 _DASH_SUFFIX_RE = re.compile(r"-(\.\w+)$")
+_RASTER_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+_MAGICK_CMD_CACHE: Optional[str] = None
+_MAGICK_LOOKED_UP = False
 
 
 def _strip_dash_suffix(name: str) -> str:
@@ -418,15 +422,104 @@ def _strip_dash_suffix(name: str) -> str:
     return _DASH_SUFFIX_RE.sub(r"\1", name)
 
 
-def _copytree_strip_dash(src: Path, dst: Path):
-    """Copy a directory tree, stripping the trailing dash from image filenames."""
+def _find_magick_cmd() -> Optional[str]:
+    """Locate ImageMagick executable once, if available."""
+    global _MAGICK_CMD_CACHE, _MAGICK_LOOKED_UP
+    if _MAGICK_LOOKED_UP:
+        return _MAGICK_CMD_CACHE
+
+    _MAGICK_LOOKED_UP = True
+    _MAGICK_CMD_CACHE = shutil.which("magick") or shutil.which("convert")
+    return _MAGICK_CMD_CACHE
+
+
+def _image_size(path: Path, trim: bool = False) -> Optional[tuple[int, int]]:
+    """Read image dimensions via ImageMagick (optionally after trim)."""
+    magick = _find_magick_cmd()
+    if not magick:
+        return None
+
+    cmd = [magick, str(path)]
+    if trim:
+        cmd.extend(["-fuzz", "1%", "-trim", "+repage"])
+    cmd.extend(["-format", "%w %h", "info:"])
+
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+    out = result.stdout.strip().split()
+    if len(out) != 2:
+        return None
+    try:
+        return int(out[0]), int(out[1])
+    except ValueError:
+        return None
+
+
+def _copy_with_optional_trim(src: Path, dst: Path, from_dash_suffix: bool) -> bool:
+    """Copy file and trim heavy border whitespace for make4ht-converted rasters."""
+    if not from_dash_suffix or src.suffix.lower() not in _RASTER_IMAGE_EXTS:
+        shutil.copy2(src, dst)
+        return False
+
+    orig_size = _image_size(src)
+    trim_size = _image_size(src, trim=True)
+    if not orig_size or not trim_size:
+        shutil.copy2(src, dst)
+        return False
+
+    ow, oh = orig_size
+    tw, th = trim_size
+    if tw >= ow or th >= oh or ow <= 0 or oh <= 0:
+        shutil.copy2(src, dst)
+        return False
+
+    dx = ow - tw
+    dy = oh - th
+    area_reduction = 1.0 - ((tw * th) / (ow * oh))
+    should_trim = area_reduction >= 0.05 or dx >= 80 or dy >= 80
+    if not should_trim:
+        shutil.copy2(src, dst)
+        return False
+
+    magick = _find_magick_cmd()
+    if not magick:
+        shutil.copy2(src, dst)
+        return False
+
+    try:
+        subprocess.run(
+            [magick, str(src), "-fuzz", "1%", "-trim", "+repage", str(dst)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        return True
+    except (OSError, subprocess.SubprocessError):
+        shutil.copy2(src, dst)
+        return False
+
+
+def _copytree_strip_dash(src: Path, dst: Path) -> tuple[int, int]:
+    """Copy a directory tree, stripping dash suffix and trimming converted rasters."""
+    files_copied = 0
+    files_trimmed = 0
     dst.mkdir(parents=True, exist_ok=True)
     for item in src.iterdir():
         if item.is_dir():
-            _copytree_strip_dash(item, dst / item.name)
+            sub_copied, sub_trimmed = _copytree_strip_dash(item, dst / item.name)
+            files_copied += sub_copied
+            files_trimmed += sub_trimmed
         else:
             dest_name = _strip_dash_suffix(item.name)
-            shutil.copy2(item, dst / dest_name)
+            dest_path = dst / dest_name
+            from_dash_suffix = dest_name != item.name
+            if _copy_with_optional_trim(item, dest_path, from_dash_suffix):
+                files_trimmed += 1
+            files_copied += 1
+    return files_copied, files_trimmed
 
 
 def fix_images(soup: BeautifulSoup, build_dir: Path):
@@ -641,9 +734,11 @@ def main():
         if src.is_dir():
             if dst.exists():
                 shutil.rmtree(dst)
-            _copytree_strip_dash(src, dst)
-            img_count = sum(1 for _ in dst.rglob("*") if _.is_file())
-            print(f"  Copied {subdir}/ ({img_count} files, dash-suffixes stripped)")
+            copied_count, trimmed_count = _copytree_strip_dash(src, dst)
+            print(
+                f"  Copied {subdir}/ ({copied_count} files, "
+                f"{trimmed_count} converted rasters whitespace-trimmed)"
+            )
 
     # Step 5: Generate search index
     print("\nGenerating search index...")

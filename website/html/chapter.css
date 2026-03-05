@@ -264,6 +264,48 @@ figure img {
   object-fit: contain;
 }
 
+/* Multi-panel figure layouts emitted by make4ht */
+figure .figure-row,
+.figure .figure-row,
+div.figure .figure-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+}
+
+figure .figure-row-item,
+.figure .figure-row-item,
+div.figure .figure-row-item {
+  flex: 1 1 220px;
+  max-width: 520px;
+  width: 100% !important;
+  margin: 0;
+}
+
+figure.subfigure-grid,
+.figure.subfigure-grid,
+div.figure.subfigure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 16px;
+  align-items: start;
+}
+
+figure.subfigure-grid > .subfigure-item,
+.figure.subfigure-grid > .subfigure-item,
+div.figure.subfigure-grid > .subfigure-item {
+  margin: 0;
+}
+
+figure.subfigure-grid > .caption,
+.figure.subfigure-grid > .caption,
+div.figure.subfigure-grid > .caption {
+  grid-column: 1 / -1;
+}
+
 figcaption,
 .caption {
   color: var(--muted);
@@ -496,6 +538,19 @@ pre,
 
   .theorem-env {
     padding: 10px 12px;
+  }
+
+  figure .figure-row-item,
+  .figure .figure-row-item,
+  div.figure .figure-row-item {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
+
+  figure.subfigure-grid,
+  .figure.subfigure-grid,
+  div.figure.subfigure-grid {
+    grid-template-columns: 1fr;
   }
 }
 
